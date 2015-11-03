@@ -122,7 +122,7 @@ private:
 	static const unsigned _max_actuators = 4;
 #endif
 #if defined(CONFIG_ARCH_BOARD_PX4FMU_V2)
-	static const unsigned _max_actuators = 6;
+	static const unsigned _max_actuators = 8;
 #endif
 #if defined(CONFIG_ARCH_BOARD_AEROCORE)
 	static const unsigned _max_actuators = 8;
@@ -219,7 +219,9 @@ const PX4FMU::GPIOConfig PX4FMU::_gpio_tab[] = {
 	{GPIO_GPIO3_INPUT,       GPIO_GPIO3_OUTPUT,       0},
 	{GPIO_GPIO4_INPUT,       GPIO_GPIO4_OUTPUT,       0},
 	{GPIO_GPIO5_INPUT,       GPIO_GPIO5_OUTPUT,       0},
-
+	{GPIO_GPIO6_INPUT,		 GPIO_GPIO6_OUTPUT, 	  0},
+	{GPIO_GPIO7_INPUT,		 GPIO_GPIO7_OUTPUT, 	  0},
+	
 	{0,                      GPIO_VDD_5V_PERIPH_EN,   0},
 	{0,                      GPIO_VDD_3V3_SENSORS_EN, 0},
 	{GPIO_VDD_BRICK_VALID,   0,                       0},
@@ -296,7 +298,7 @@ PX4FMU::PX4FMU() :
 	memset(_poll_fds, 0, sizeof(_poll_fds));
 
 	/* only enable this during development */
-	_debug_enabled = false;
+	_debug_enabled = true;
 }
 
 PX4FMU::~PX4FMU()
@@ -421,12 +423,12 @@ PX4FMU::set_mode(Mode mode)
 		_pwm_alt_rate_channels = 0;
 
 		/* XXX magic numbers */
-		up_pwm_servo_init(0x3f);
+		up_pwm_servo_init(0x3f); 
 		set_pwm_rate(_pwm_alt_rate_channels, _pwm_default_rate, _pwm_alt_rate);
 
 		break;
 
-#ifdef CONFIG_ARCH_BOARD_AEROCORE
+//#ifdef CONFIG_ARCH_BOARD_AEROCORE
 	case MODE_8PWM: // AeroCore PWMs as 8 PWM outs
 		debug("MODE_8PWM");
 		/* default output rates */
@@ -438,7 +440,7 @@ PX4FMU::set_mode(Mode mode)
 		up_pwm_servo_init(0xff);
 		set_pwm_rate(_pwm_alt_rate_channels, _pwm_default_rate, _pwm_alt_rate);
 		break;
-#endif
+//#endif
 
 	case MODE_NONE:
 		debug("MODE_NONE");
@@ -684,7 +686,9 @@ PX4FMU::task_main()
 					break;
 
 				case MODE_6PWM:
-					num_outputs = 6;
+					//num_outputs = 6;
+					//reset pwm out channels
+					num_outputs = 8;
 					break;
 
 				case MODE_8PWM:
@@ -873,9 +877,9 @@ PX4FMU::ioctl(file *filp, int cmd, unsigned long arg)
 	case MODE_2PWM:
 	case MODE_4PWM:
 	case MODE_6PWM:
-#ifdef CONFIG_ARCH_BOARD_AEROCORE
+//#ifdef CONFIG_ARCH_BOARD_AEROCORE
 	case MODE_8PWM:
-#endif
+//#endif
 		ret = pwm_ioctl(filp, cmd, arg);
 		break;
 
@@ -1107,14 +1111,14 @@ PX4FMU::pwm_ioctl(file *filp, int cmd, unsigned long arg)
 			break;
 		}
 
-#ifdef CONFIG_ARCH_BOARD_AEROCORE
+//#ifdef CONFIG_ARCH_BOARD_AEROCORE
 	case PWM_SERVO_SET(7):
 	case PWM_SERVO_SET(6):
 		if (_mode < MODE_8PWM) {
 			ret = -EINVAL;
 			break;
 		}
-#endif
+//#endif
 
 	case PWM_SERVO_SET(5):
 	case PWM_SERVO_SET(4):
@@ -1143,14 +1147,14 @@ PX4FMU::pwm_ioctl(file *filp, int cmd, unsigned long arg)
 
 		break;
 
-#ifdef CONFIG_ARCH_BOARD_AEROCORE
+//#ifdef CONFIG_ARCH_BOARD_AEROCORE
 	case PWM_SERVO_GET(7):
 	case PWM_SERVO_GET(6):
 		if (_mode < MODE_8PWM) {
 			ret = -EINVAL;
 			break;
 		}
-#endif
+//#endif
 
 	case PWM_SERVO_GET(5):
 	case PWM_SERVO_GET(4):
@@ -1179,21 +1183,21 @@ PX4FMU::pwm_ioctl(file *filp, int cmd, unsigned long arg)
 	case PWM_SERVO_GET_RATEGROUP(3):
 	case PWM_SERVO_GET_RATEGROUP(4):
 	case PWM_SERVO_GET_RATEGROUP(5):
-#ifdef CONFIG_ARCH_BOARD_AEROCORE
+//#ifdef CONFIG_ARCH_BOARD_AEROCORE
 	case PWM_SERVO_GET_RATEGROUP(6):
 	case PWM_SERVO_GET_RATEGROUP(7):
-#endif
+//#endif
 		*(uint32_t *)arg = up_pwm_servo_get_rate_group(cmd - PWM_SERVO_GET_RATEGROUP(0));
 		break;
 
 	case PWM_SERVO_GET_COUNT:
 	case MIXERIOCGETOUTPUTCOUNT:
 		switch (_mode) {
-#ifdef CONFIG_ARCH_BOARD_AEROCORE
+//#ifdef CONFIG_ARCH_BOARD_AEROCORE
 		case MODE_8PWM:
 			*(unsigned *)arg = 8;
 			break;
-#endif
+//#endif
 
 		case MODE_6PWM:
 			*(unsigned *)arg = 6;
@@ -1240,11 +1244,11 @@ PX4FMU::pwm_ioctl(file *filp, int cmd, unsigned long arg)
 			set_mode(MODE_6PWM);
 			break;
 #endif
-#if defined(CONFIG_ARCH_BOARD_AEROCORE)
+//#if defined(CONFIG_ARCH_BOARD_AEROCORE)
 		case 8:
 			set_mode(MODE_8PWM);
 			break;
-#endif
+//#endif
 
 		default:
 			ret = -EINVAL;
@@ -1648,7 +1652,7 @@ fmu_new_mode(PortMode new_mode)
 		servo_mode = PX4FMU::MODE_4PWM;
 #endif
 #if defined(CONFIG_ARCH_BOARD_PX4FMU_V2)
-		servo_mode = PX4FMU::MODE_6PWM;
+		servo_mode = PX4FMU::MODE_8PWM;
 #endif
 #if defined(CONFIG_ARCH_BOARD_AEROCORE)
 		servo_mode = PX4FMU::MODE_8PWM;

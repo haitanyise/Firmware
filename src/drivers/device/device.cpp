@@ -88,7 +88,7 @@ Device::Device(const char *name,
 	// public
 	// protected
 	_name(name),
-	_debug_enabled(false),
+	_debug_enabled(true),
 	// private
 	_irq(irq),
 	_irq_attached(false)

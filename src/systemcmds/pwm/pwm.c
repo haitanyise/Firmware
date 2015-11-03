@@ -258,7 +258,7 @@ pwm_main(int argc, char *argv[])
 	/* get the number of servo channels */
 	unsigned servo_count;
 	ret = ioctl(fd, PWM_SERVO_GET_COUNT, (unsigned long)&servo_count);
-
+	//warnx("Get Count:%d ",servo_count);
 	if (ret != OK) {
 		err(1, "PWM_SERVO_GET_COUNT");
 	}
