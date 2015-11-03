@@ -686,9 +686,7 @@ PX4FMU::task_main()
 					break;
 
 				case MODE_6PWM:
-					//num_outputs = 6;
-					//reset pwm out channels
-					num_outputs = 8;
+					num_outputs = 6;
 					break;
 
 				case MODE_8PWM:
