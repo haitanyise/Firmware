@@ -101,6 +101,8 @@ public:
 		MODE_4PWM,
 		MODE_6PWM,
 		MODE_8PWM,
+		MODE_10PWM,
+		MODE_12PWM,
 	};
 	PX4FMU();
 	virtual ~PX4FMU();
@@ -122,7 +124,7 @@ private:
 	static const unsigned _max_actuators = 4;
 #endif
 #if defined(CONFIG_ARCH_BOARD_PX4FMU_V2)
-	static const unsigned _max_actuators = 8;
+	static const unsigned _max_actuators = 12;
 #endif
 #if defined(CONFIG_ARCH_BOARD_AEROCORE)
 	static const unsigned _max_actuators = 8;
@@ -221,6 +223,11 @@ const PX4FMU::GPIOConfig PX4FMU::_gpio_tab[] = {
 	{GPIO_GPIO5_INPUT,       GPIO_GPIO5_OUTPUT,       0},
 	{GPIO_GPIO6_INPUT,		 GPIO_GPIO6_OUTPUT, 	  0},
 	{GPIO_GPIO7_INPUT,		 GPIO_GPIO7_OUTPUT, 	  0},
+	//add Timer 3 PWM GPIO
+	{GPIO_GPIO8_INPUT,		 GPIO_GPIO8_OUTPUT, 	  0},
+	{GPIO_GPIO9_INPUT,		 GPIO_GPIO9_OUTPUT, 	  0},
+	{GPIO_GPIO10_INPUT,		 GPIO_GPIO10_OUTPUT, 	  0},
+	{GPIO_GPIO11_INPUT,		 GPIO_GPIO11_OUTPUT, 	  0},
 	
 	{0,                      GPIO_VDD_5V_PERIPH_EN,   0},
 	{0,                      GPIO_VDD_3V3_SENSORS_EN, 0},
@@ -441,7 +448,31 @@ PX4FMU::set_mode(Mode mode)
 		set_pwm_rate(_pwm_alt_rate_channels, _pwm_default_rate, _pwm_alt_rate);
 		break;
 //#endif
+    //add 10 pwm
+    case MODE_10PWM:
+		debug("MODE_10PWM");
+		/* default output rates */
+		_pwm_default_rate = 50;
+		_pwm_alt_rate = 50;
+		_pwm_alt_rate_channels = 0;
 
+		/* XXX magic numbers */
+		up_pwm_servo_init(0x3ff);
+		set_pwm_rate(_pwm_alt_rate_channels, _pwm_default_rate, _pwm_alt_rate);
+		break;
+    //add 12 pwm
+	case MODE_12PWM:
+		debug("MODE_12PWM");
+		/* default output rates */
+		_pwm_default_rate = 50;
+		_pwm_alt_rate = 50;
+		_pwm_alt_rate_channels = 0;
+
+		/* XXX magic numbers */
+		up_pwm_servo_init(0xfff);
+		set_pwm_rate(_pwm_alt_rate_channels, _pwm_default_rate, _pwm_alt_rate);
+		break;
+		
 	case MODE_NONE:
 		debug("MODE_NONE");
 
@@ -469,10 +500,10 @@ PX4FMU::set_pwm_rate(uint32_t rate_map, unsigned default_rate, unsigned alt_rate
 
 	for (unsigned pass = 0; pass < 2; pass++) {
 		for (unsigned group = 0; group < _max_actuators; group++) {
-
+			
 			// get the channel mask for this rate group
 			uint32_t mask = up_pwm_servo_get_rate_group(group);
-
+			
 			if (mask == 0)
 				continue;
 
@@ -692,6 +723,15 @@ PX4FMU::task_main()
 				case MODE_8PWM:
 					num_outputs = 8;
 					break;
+				//add 10 pwm
+				case MODE_10PWM:
+					num_outputs = 10;
+					break;
+				//add 12 pwm
+				case MODE_12PWM:
+					num_outputs = 12;
+					break;
+					
 				default:
 					num_outputs = 0;
 					break;
@@ -878,6 +918,8 @@ PX4FMU::ioctl(file *filp, int cmd, unsigned long arg)
 //#ifdef CONFIG_ARCH_BOARD_AEROCORE
 	case MODE_8PWM:
 //#endif
+	case MODE_10PWM:
+	case MODE_12PWM:
 		ret = pwm_ioctl(filp, cmd, arg);
 		break;
 
@@ -1110,6 +1152,19 @@ PX4FMU::pwm_ioctl(file *filp, int cmd, unsigned long arg)
 		}
 
 //#ifdef CONFIG_ARCH_BOARD_AEROCORE
+    //add PWM SET FOR TIMER 3
+	case PWM_SERVO_SET(11):
+	case PWM_SERVO_SET(10):
+		if (_mode < MODE_12PWM) {
+			ret = -EINVAL;
+			break;
+		}
+	case PWM_SERVO_SET(9):
+	case PWM_SERVO_SET(8):
+		if (_mode < MODE_10PWM) {
+			ret = -EINVAL;
+			break;
+		}
 	case PWM_SERVO_SET(7):
 	case PWM_SERVO_SET(6):
 		if (_mode < MODE_8PWM) {
@@ -1144,6 +1199,20 @@ PX4FMU::pwm_ioctl(file *filp, int cmd, unsigned long arg)
 		}
 
 		break;
+	//add PWM GET FOR TIMER 3	
+	case PWM_SERVO_GET(11):
+	case PWM_SERVO_GET(10):
+		if (_mode < MODE_12PWM) {
+			ret = -EINVAL;
+			break;
+		}
+
+	case PWM_SERVO_GET(9):
+	case PWM_SERVO_GET(8):
+		if (_mode < MODE_10PWM) {
+			ret = -EINVAL;
+			break;
+		}
 
 //#ifdef CONFIG_ARCH_BOARD_AEROCORE
 	case PWM_SERVO_GET(7):
@@ -1185,12 +1254,26 @@ PX4FMU::pwm_ioctl(file *filp, int cmd, unsigned long arg)
 	case PWM_SERVO_GET_RATEGROUP(6):
 	case PWM_SERVO_GET_RATEGROUP(7):
 //#endif
+    //add GET PWM RATE GROUP FOR TIMER 3
+	case PWM_SERVO_GET_RATEGROUP(8):
+	case PWM_SERVO_GET_RATEGROUP(9):
+	case PWM_SERVO_GET_RATEGROUP(10):
+	case PWM_SERVO_GET_RATEGROUP(11):
 		*(uint32_t *)arg = up_pwm_servo_get_rate_group(cmd - PWM_SERVO_GET_RATEGROUP(0));
 		break;
 
 	case PWM_SERVO_GET_COUNT:
 	case MIXERIOCGETOUTPUTCOUNT:
 		switch (_mode) {
+		//add TIMER3 MOED
+		case MODE_12PWM:
+			*(unsigned *)arg = 12;
+			break;
+			
+		case MODE_10PWM:
+			*(unsigned *)arg = 10;
+			break;
+		
 //#ifdef CONFIG_ARCH_BOARD_AEROCORE
 		case MODE_8PWM:
 			*(unsigned *)arg = 8;
@@ -1247,7 +1330,15 @@ PX4FMU::pwm_ioctl(file *filp, int cmd, unsigned long arg)
 			set_mode(MODE_8PWM);
 			break;
 //#endif
+       //Add TIMER 3 MODE
+        case 10:
+			set_mode(MODE_10PWM);
+			break;
 
+		case 12:
+			set_mode(MODE_12PWM);
+			break;
+			
 		default:
 			ret = -EINVAL;
 			break;
@@ -1650,7 +1741,7 @@ fmu_new_mode(PortMode new_mode)
 		servo_mode = PX4FMU::MODE_4PWM;
 #endif
 #if defined(CONFIG_ARCH_BOARD_PX4FMU_V2)
-		servo_mode = PX4FMU::MODE_8PWM;
+		servo_mode = PX4FMU::MODE_12PWM;
 #endif
 #if defined(CONFIG_ARCH_BOARD_AEROCORE)
 		servo_mode = PX4FMU::MODE_8PWM;
