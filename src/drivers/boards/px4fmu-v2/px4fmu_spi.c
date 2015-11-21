@@ -93,19 +93,13 @@ __EXPORT void weak_function stm32_spiinitialize(void)
 #endif
 
 #ifdef CONFIG_STM32_SPI2
-	stm32_configgpio(GPIO_SPI_CS_FRAM);
-	stm32_gpiowrite(GPIO_SPI_CS_FRAM, 1);
+	
 #endif
 
 #ifdef CONFIG_STM32_SPI4
-	stm32_configgpio(GPIO_SPI_CS_EXT0);
-	stm32_configgpio(GPIO_SPI_CS_EXT1);
-	stm32_configgpio(GPIO_SPI_CS_EXT2);
-	stm32_configgpio(GPIO_SPI_CS_EXT3);
-	stm32_gpiowrite(GPIO_SPI_CS_EXT0, 1);
-	stm32_gpiowrite(GPIO_SPI_CS_EXT1, 1);
-	stm32_gpiowrite(GPIO_SPI_CS_EXT2, 1);
-	stm32_gpiowrite(GPIO_SPI_CS_EXT3, 1);
+//FRAM in SPI 4
+	stm32_configgpio(GPIO_SPI_CS_FRAM);
+	stm32_gpiowrite(GPIO_SPI_CS_FRAM, 1);
 #endif
 }
 
@@ -173,8 +167,7 @@ __EXPORT uint8_t stm32_spi1status(FAR struct spi_dev_s *dev, enum spi_dev_e devi
 #ifdef CONFIG_STM32_SPI2
 __EXPORT void stm32_spi2select(FAR struct spi_dev_s *dev, enum spi_dev_e devid, bool selected)
 {
-	/* there can only be one device on this bus, so always select it */
-	stm32_gpiowrite(GPIO_SPI_CS_FRAM, !selected);
+	
 }
 
 __EXPORT uint8_t stm32_spi2status(FAR struct spi_dev_s *dev, enum spi_dev_e devid)
@@ -186,45 +179,9 @@ __EXPORT uint8_t stm32_spi2status(FAR struct spi_dev_s *dev, enum spi_dev_e devi
 
 __EXPORT void stm32_spi4select(FAR struct spi_dev_s *dev, enum spi_dev_e devid, bool selected)
 {
-	/* SPI select is active low, so write !selected to select the device */
-
-	switch (devid) {
-	case PX4_SPIDEV_EXT0:
-		/* Making sure the other peripherals are not selected */
-		stm32_gpiowrite(GPIO_SPI_CS_EXT0, !selected);
-		stm32_gpiowrite(GPIO_SPI_CS_EXT1, 1);
-		stm32_gpiowrite(GPIO_SPI_CS_EXT2, 1);
-		stm32_gpiowrite(GPIO_SPI_CS_EXT3, 1);
-		break;
-
-	case PX4_SPIDEV_EXT1:
-		/* Making sure the other peripherals are not selected */
-		stm32_gpiowrite(GPIO_SPI_CS_EXT0, 1);
-		stm32_gpiowrite(GPIO_SPI_CS_EXT1, !selected);
-		stm32_gpiowrite(GPIO_SPI_CS_EXT2, 1);
-		stm32_gpiowrite(GPIO_SPI_CS_EXT3, 1);
-		break;
-
-	case PX4_SPIDEV_EXT2:
-		/* Making sure the other peripherals are not selected */
-		stm32_gpiowrite(GPIO_SPI_CS_EXT0, 1);
-		stm32_gpiowrite(GPIO_SPI_CS_EXT1, 1);
-		stm32_gpiowrite(GPIO_SPI_CS_EXT2, !selected);
-		stm32_gpiowrite(GPIO_SPI_CS_EXT3, 1);
-		break;
-
-	case PX4_SPIDEV_EXT3:
-		/* Making sure the other peripherals are not selected */
-		stm32_gpiowrite(GPIO_SPI_CS_EXT0, 1);
-		stm32_gpiowrite(GPIO_SPI_CS_EXT1, 1);
-		stm32_gpiowrite(GPIO_SPI_CS_EXT2, 1);
-		stm32_gpiowrite(GPIO_SPI_CS_EXT3, !selected);
-		break;
-
-	default:
-		break;
-
-	}
+    //FRAM IN SPI4
+	/* there can only be one device on this bus, so always select it */
+	stm32_gpiowrite(GPIO_SPI_CS_FRAM, !selected);
 }
 
 __EXPORT uint8_t stm32_spi4status(FAR struct spi_dev_s *dev, enum spi_dev_e devid)
