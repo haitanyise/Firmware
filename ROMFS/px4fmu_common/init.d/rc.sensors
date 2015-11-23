@@ -19,7 +19,9 @@ then
 	fi
 
 	# Internal I2C bus
-	if hmc5883 -C -T -I -R 4 start
+	#if hmc5883 -C -T -I -R 4 start
+	#hmc5883 on External SPI bus
+	if hmc5883 -C -T -S -R 4 start
 	then
 	fi
 
