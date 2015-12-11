@@ -37,7 +37,7 @@
 
 MODULE_COMMAND	= mpu6000
 
-SRCS		= mpu6000.cpp sbus.c
+SRCS		= mpu6000.cpp
 
 MODULE_STACKSIZE	= 5000
 

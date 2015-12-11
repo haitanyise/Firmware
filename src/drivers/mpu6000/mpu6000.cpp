@@ -74,9 +74,6 @@
 #include <mathlib/math/filter/LowPassFilter2p.hpp>
 #include <lib/conversion/rotation.h>
 
-extern "C" {
-#include "sbus.h"
-}
 #define DIR_READ			0x80
 #define DIR_WRITE			0x00
 
@@ -676,7 +673,7 @@ MPU6000::init()
 	if (_gyro->_gyro_topic < 0) {
 		warnx("ADVERT FAIL");
 	}
-	::sbus_init("/dev/ttyS3");
+
 out:
 	return ret;
 }
@@ -1528,7 +1525,6 @@ MPU6000::measure_trampoline(void *arg)
 
 	/* make another measurement */
 	dev->measure();
-	::sbus_input();
 }
 
 void
