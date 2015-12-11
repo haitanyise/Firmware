@@ -45,7 +45,8 @@ MODULES		+= drivers/mkblctrl
 MODULES		+= drivers/px4flow
 MODULES		+= drivers/oreoled
 MODULES		+= drivers/gimbal
-
+#add modules sbus
+MODULES		+= drivers/sbus
 #
 # System commands
 #

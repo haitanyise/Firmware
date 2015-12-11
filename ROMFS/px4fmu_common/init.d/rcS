@@ -251,7 +251,8 @@ then
 			tone_alarm $TUNE_ERR
 		fi
 	fi
-
+  #add sbus start
+  sbus start
 	#
 	# Set default output if not set
 	#
